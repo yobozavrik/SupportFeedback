@@ -338,6 +338,8 @@
             let userGeolocation = null;
             let userId = null;
             let userAchievements = null;
+            let imageKitAuthCache = null;
+            let imageKitAuthPromise = null;
 
             // --- INITIALIZATION ---
             const initializeUser = () => {
@@ -466,14 +468,15 @@
             
             const showToast = (message, type = 'success') => {
                 const toastId = `toast-${Date.now()}`;
-                const colors = {
-                    success: 'bg-green-500',
-                    achievement: 'bg-yellow-500'
+                const toastConfig = {
+                    success: { color: 'bg-green-500', icon: '✅' },
+                    achievement: { color: 'bg-yellow-500', icon: '🏆' },
+                    error: { color: 'bg-red-500', icon: '⚠️' }
                 };
-                const icon = type === 'achievement' ? '🏆' : '✅';
+                const { color, icon } = toastConfig[type] || { color: 'bg-orange-500', icon: 'ℹ️' };
                 const toastElement = document.createElement('div');
                 toastElement.id = toastId;
-                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
+                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${color} toast-enter`;
                 const toastMessage = document.createElement('p');
                 toastMessage.textContent = `${icon} ${message}`;
                 toastElement.appendChild(toastMessage);
@@ -525,18 +528,62 @@
                 return JSON.parse(jsonText);
             };
 
-            const uploadToImageKit = (file) => {
+            const fetchImageKitAuth = async () => {
+                const response = await fetch('/auth/imagekit', { method: 'POST' });
+                if (!response.ok) {
+                    throw new Error('Не вдалося отримати ключі для ImageKit.');
+                }
+                const authParams = await response.json();
+                if (!authParams.signature || !authParams.token || !authParams.expire) {
+                    throw new Error('Сервер повернув неповні дані авторизації ImageKit.');
+                }
+                return authParams;
+            };
+
+            const ensureImageKitAuth = async () => {
+                const now = Math.floor(Date.now() / 1000);
+                const expireTime = Number(imageKitAuthCache?.expire);
+                if (imageKitAuthCache && Number.isFinite(expireTime) && expireTime - 5 > now) {
+                    return imageKitAuthCache;
+                }
+
+                if (!imageKitAuthPromise) {
+                    imageKitAuthPromise = fetchImageKitAuth().finally(() => {
+                        imageKitAuthPromise = null;
+                    });
+                }
+
+                imageKitAuthCache = await imageKitAuthPromise;
+                return imageKitAuthCache;
+            };
+
+            const prefetchImageKitAuth = () => {
+                ensureImageKitAuth().catch((error) => {
+                    console.warn('ImageKit auth prefetch failed:', error);
+                });
+            };
+
+            const uploadToImageKit = async (file) => {
+                const authParams = await ensureImageKitAuth();
                 return new Promise((resolve, reject) => {
                     imagekit.upload({
                         file: file,
                         fileName: file.name,
                         tags: [`feedback,${currentCategory}`],
+                        signature: authParams.signature,
+                        token: authParams.token,
+                        expire: authParams.expire,
                     }, (error, result) => {
                         if (error) {
                             console.error("ImageKit SDK Upload Error:", error);
+                            if (error?.message?.toLowerCase().includes('signature has expired')) {
+                                imageKitAuthCache = null;
+                            }
                             reject(new Error(error.message || 'ImageKit SDK upload failed'));
-                        } else {
+                        } else if (result?.url) {
                             resolve(result.url);
+                        } else {
+                            reject(new Error('ImageKit did not return a file URL.'));
                         }
                     });
                 });
@@ -549,24 +596,30 @@
                 let imageUrl = null;
                 const applicationId = `GB-${Date.now().toString(36).toUpperCase()}`;
 
-                try {
-                    if (selectedFile) {
+                if (selectedFile) {
+                    try {
                         imageUrl = await uploadToImageKit(selectedFile);
+                    } catch (uploadError) {
+                        imageUrl = null;
+                        console.error('Image upload failed:', uploadError);
+                        showToast('Не вдалося завантажити фото. Відгук буде надіслано без зображення.', 'error');
                     }
+                }
 
-                    const feedbackData = {
-                        userId: userId,
-                        applicationId: applicationId,
-                        storeId: storeId,
-                        category: currentCategory,
-                        rating: satisfactionRating,
-                        product: document.getElementById('product-input').value || null,
-                        text: document.getElementById('feedback-text').value,
-                        imageUrl: imageUrl,
-                        phone: document.getElementById('phone-input').value || null,
-                        geolocation: userGeolocation
-                    };
+                const feedbackData = {
+                    userId: userId,
+                    applicationId: applicationId,
+                    storeId: storeId,
+                    category: currentCategory,
+                    rating: satisfactionRating,
+                    product: document.getElementById('product-input').value || null,
+                    text: document.getElementById('feedback-text').value,
+                    imageUrl: imageUrl,
+                    phone: document.getElementById('phone-input').value || null,
+                    geolocation: userGeolocation
+                };
 
+                try {
                     const response = await fetch(N8N_WEBHOOK_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -576,11 +629,10 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-                    
+
                     closeModal(modal);
                     showToast(`Дякуємо! Номер вашого звернення: ${applicationId}`);
                     trackStoreVisit(storeId);
-
                 } catch (error) {
                     console.error('There was a problem:', error);
                     alert(`Виникла помилка під час відправки: ${error.message}. Спробуйте, будь ласка, ще раз.`);
@@ -701,7 +753,9 @@
                 `;
                 achievementsList.innerHTML = achievementHTML;
             };
-            
+
+            prefetchImageKitAuth();
+
             // --- EVENT LISTENERS BINDING ---
             categoryButtons.forEach(button => button.addEventListener('click', () => openModal(button.dataset.category)));
             closeModalBtn.addEventListener('click', () => closeModal(modal));

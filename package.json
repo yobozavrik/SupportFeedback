@@ -1,0 +1,18 @@
+{
+  "name": "supportfeedback",
+  "version": "1.0.0",
+  "description": "Feedback form with ImageKit authentication backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "imagekit": "^6.0.0"
+  }
+}
