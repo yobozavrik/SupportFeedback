@@ -474,7 +474,9 @@
                 const toastElement = document.createElement('div');
                 toastElement.id = toastId;
                 toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
-                toastElement.innerHTML = `<p>${icon} ${message}</p>`;
+                const toastMessage = document.createElement('p');
+                toastMessage.textContent = `${icon} ${message}`;
+                toastElement.appendChild(toastMessage);
                 
                 toastContainer.appendChild(toastElement);
 
