@@ -51,14 +51,6 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
-        .ai-loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #f97316;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -217,22 +209,11 @@
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
                         <label for="feedback-text" class="block text-sm font-medium text-gray-700">Ваше повідомлення:</label>
-                        <button type="button" id="ai-assist-btn" class="text-xs text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-1">
-                            <span id="ai-assist-btn-text">✨ Допомога AI</span>
-                            <div id="ai-assist-loader" class="ai-loader hidden"></div>
-                        </button>
+                        <a href="https://t.me/galiabaluvana_support" target="_blank" rel="noopener noreferrer" class="text-xs text-orange-600 hover:text-orange-800 font-semibold">
+                            Потрібна допомога? Напишіть у підтримку
+                        </a>
                     </div>
                     <textarea id="feedback-text" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Опишіть детальніше..." required></textarea>
-                </div>
-
-                <div id="ai-results-section" class="hidden mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Аналіз від AI:</p>
-                    <div id="ai-sentiment" class="text-sm mb-2"></div>
-                    <div id="ai-summary" class="text-sm mb-2"></div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-600 mb-1">Що можна додати:</p>
-                        <ul id="ai-suggestions" class="list-disc list-inside text-xs text-gray-500 space-y-1"></ul>
-                    </div>
                 </div>
                 
                 <div id="photo-upload-section" class="hidden mb-4">
@@ -301,8 +282,6 @@
             const IMAGEKIT_PUBLIC_KEY = 'public_I3pU5jMt1G7gZq0U0i3bJrLGHWU=';
             const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/galabaluvana';
             const N8N_WEBHOOK_URL = 'https://n8n.dmytrotovstytskyi.online/webhook/supporttest'; // Production webhook endpoint
-            const GEMINI_API_KEY = ''; // The build environment will provide this key.
-            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
             const MOCK_PRODUCT_LIST = [
                 "Пельмені зі свининою", "Пельмені з яловичиною", "Пельмені з куркою", "Пельмені дитячі",
                 "Вареники з картоплею", "Вареники з капустою", "Вареники з вишнею", "Вареники з сиром солодкі",
@@ -446,7 +425,6 @@
             const resetForm = () => {
                 feedbackForm.reset();
                 clearSelectedFile();
-                document.getElementById('ai-results-section').classList.add('hidden');
                 const suggestionsEl = document.getElementById('product-suggestions');
                 suggestionsEl.innerHTML = '';
                 suggestionsEl.classList.add('hidden');
@@ -481,24 +459,14 @@
                 reader.readAsDataURL(file);
             };
             
-            const showLoading = (isLoading, element = 'submit') => {
+            const showLoading = (isLoading) => {
                 const btn = document.getElementById('submit-btn');
                 const btnText = document.getElementById('submit-btn-text');
                 const loader = document.getElementById('submit-loader');
-                
-                const aiBtn = document.getElementById('ai-assist-btn');
-                const aiBtnText = document.getElementById('ai-assist-btn-text');
-                const aiLoader = document.getElementById('ai-assist-loader');
 
-                 if (element === 'submit') {
-                    btnText.classList.toggle('hidden', isLoading);
-                    loader.classList.toggle('hidden', !isLoading);
-                    btn.disabled = isLoading;
-                } else if (element === 'ai') {
-                    aiBtnText.classList.toggle('hidden', isLoading);
-                    aiLoader.classList.toggle('hidden', !isLoading);
-                    aiBtn.disabled = isLoading;
-                }
+                btnText.classList.toggle('hidden', isLoading);
+                loader.classList.toggle('hidden', !isLoading);
+                btn.disabled = isLoading;
             };
             
             const showToast = (message, type = 'success') => {
@@ -525,44 +493,6 @@
                 }, 5000);
             };
             
-            const getAiAnalysis = async (text) => {
-                const systemPrompt = "Ти — доброзичливий AI-асистент компанії 'Галя Балувана'. Твоя мета — допомогти клієнтам написати чіткий та конструктивний відгук. Проаналізуй текст користувача та надай настрій відгуку, коротке резюме та три конкретні поради щодо покращення українською мовою. Відповідай ТІЛЬКИ у форматі JSON згідно зі схемою.";
-                const payload = {
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ parts: [{ text }] }],
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                sentiment: { type: "STRING" },
-                                summary: { type: "STRING" },
-                                suggestions: { type: "ARRAY", items: { type: "STRING" } }
-                            },
-                            required: ["sentiment", "summary", "suggestions"]
-                        }
-                    }
-                };
-                
-                const response = await fetch(GEMINI_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error("Gemini API Error Response:", errorBody);
-                    throw new Error('Не вдалося отримати відповідь від AI.');
-                }
-                const result = await response.json();
-                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!jsonText) {
-                   throw new Error('Відповідь AI має невірний формат.');
-                }
-                return JSON.parse(jsonText);
-            };
-
             const uploadToImageKit = (file) => {
                 if (!file) {
                     return Promise.resolve(null);
@@ -610,7 +540,7 @@
 
             const handleSubmit = async (event) => {
                 event.preventDefault();
-                showLoading(true, 'submit');
+                showLoading(true);
 
                 let imageUrl = null;
                 const applicationId = `GB-${Date.now().toString(36).toUpperCase()}`;
@@ -651,36 +581,7 @@
                     console.error('There was a problem:', error);
                     alert(buildSubmissionErrorMessage(error));
                 } finally {
-                    showLoading(false, 'submit');
-                }
-            };
-            
-             const handleAiAssist = async () => {
-                const text = document.getElementById('feedback-text').value;
-                if (text.trim().length < 10) {
-                    alert('Будь ласка, напишіть хоча б декілька слів для аналізу.');
-                    return;
-                }
-                showLoading(true, 'ai');
-                document.getElementById('ai-results-section').classList.add('hidden');
-
-                try {
-                    const analysis = await getAiAnalysis(text);
-                    document.getElementById('ai-sentiment').textContent = `Настрій відгуку: ${analysis.sentiment || 'Не визначено'}`;
-                    document.getElementById('ai-summary').textContent = `Ключова думка: ${analysis.summary || '–'}`;
-                    const suggestionsEl = document.getElementById('ai-suggestions');
-                    suggestionsEl.innerHTML = '';
-                    (analysis.suggestions || []).forEach(suggestion => {
-                        const li = document.createElement('li');
-                        li.textContent = suggestion;
-                        suggestionsEl.appendChild(li);
-                    });
-                    document.getElementById('ai-results-section').classList.remove('hidden');
-                } catch (error) {
-                    console.error('AI Assist Error:', error);
-                    alert(`Помилка аналізу: ${error.message}`);
-                } finally {
-                    showLoading(false, 'ai');
+                    showLoading(false);
                 }
             };
             
@@ -791,7 +692,6 @@
             });
 
             feedbackForm.addEventListener('submit', handleSubmit);
-            document.getElementById('ai-assist-btn').addEventListener('click', handleAiAssist);
             document.getElementById('photo-upload-btn').addEventListener('click', () => document.getElementById('photo-upload-input').click());
             document.getElementById('photo-upload-input').addEventListener('change', handleFileSelect);
             document.getElementById('product-input').addEventListener('input', handleProductAutocomplete);
