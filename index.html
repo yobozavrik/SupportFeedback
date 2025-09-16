@@ -542,6 +542,23 @@
                 });
             };
 
+            const isLikelyCorsError = (error) => {
+                if (!(error instanceof TypeError)) return false;
+                const message = error?.message ?? '';
+                return /Failed to fetch|NetworkError|Load failed/i.test(message);
+            };
+
+            const buildSubmissionErrorMessage = (error) => {
+                const messageText = error?.message || 'невідома помилка';
+                const baseMessage = `Виникла помилка під час відправки: ${messageText}. Спробуйте, будь ласка, ще раз.`;
+
+                if (isLikelyCorsError(error)) {
+                    return `${baseMessage}\n\nПідказка: браузер заблокував запит через політику CORS. Переконайтеся, що вебхук n8n повертає заголовок Access-Control-Allow-Origin для домену цього віджета.`;
+                }
+
+                return baseMessage;
+            };
+
             const handleSubmit = async (event) => {
                 event.preventDefault();
                 showLoading(true, 'submit');
@@ -583,7 +600,7 @@
 
                 } catch (error) {
                     console.error('There was a problem:', error);
-                    alert(`Виникла помилка під час відправки: ${error.message}. Спробуйте, будь ласка, ще раз.`);
+                    alert(buildSubmissionErrorMessage(error));
                 } finally {
                     showLoading(false, 'submit');
                 }
