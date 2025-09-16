@@ -468,14 +468,19 @@
                 const toastId = `toast-${Date.now()}`;
                 const colors = {
                     success: 'bg-green-500',
-                    achievement: 'bg-yellow-500'
+                    achievement: 'bg-yellow-500',
+                    error: 'bg-red-500'
                 };
-                const icon = type === 'achievement' ? '🏆' : '✅';
+                const icons = {
+                    success: '✅',
+                    achievement: '🏆',
+                    error: '⚠️'
+                };
                 const toastElement = document.createElement('div');
                 toastElement.id = toastId;
-                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
+                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${(colors[type] || colors.success)} toast-enter`;
                 const toastMessage = document.createElement('p');
-                toastMessage.textContent = `${icon} ${message}`;
+                toastMessage.textContent = `${icons[type] || icons.success} ${message}`;
                 toastElement.appendChild(toastMessage);
                 
                 toastContainer.appendChild(toastElement);
@@ -525,11 +530,33 @@
                 return JSON.parse(jsonText);
             };
 
-            const uploadToImageKit = (file) => {
+            const uploadToImageKit = async (file) => {
+                const authResponse = await fetch('/auth/imagekit');
+                if (!authResponse.ok) {
+                    let errorMessage = 'Не вдалося отримати авторизацію для завантаження зображення.';
+                    try {
+                        const errorBody = await authResponse.json();
+                        if (errorBody?.error) {
+                            errorMessage = errorBody.error;
+                        }
+                    } catch (parseError) {
+                        console.error('Failed to parse ImageKit auth error response:', parseError);
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const auth = await authResponse.json();
+                if (!auth?.signature || !auth?.token || !auth?.expire) {
+                    throw new Error('Сервер повернув некоректні дані для завантаження зображення.');
+                }
+
                 return new Promise((resolve, reject) => {
                     imagekit.upload({
                         file: file,
                         fileName: file.name,
+                        signature: auth.signature,
+                        token: auth.token,
+                        expire: auth.expire,
                         tags: [`feedback,${currentCategory}`],
                     }, (error, result) => {
                         if (error) {
@@ -551,7 +578,13 @@
 
                 try {
                     if (selectedFile) {
-                        imageUrl = await uploadToImageKit(selectedFile);
+                        try {
+                            imageUrl = await uploadToImageKit(selectedFile);
+                        } catch (uploadError) {
+                            console.error('Image upload failed, feedback will be sent without image:', uploadError);
+                            showToast('Не вдалося завантажити фото. Відгук буде надісланий без нього.', 'error');
+                            imageUrl = null;
+                        }
                     }
 
                     const feedbackData = {
