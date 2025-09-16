@@ -295,7 +295,8 @@
     </div>
 
 
-    <script>
+    <script type="module">
+        import { createUploadToImageKit } from './scripts/imagekitUpload.js';
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
             const IMAGEKIT_PUBLIC_KEY = 'public_I3pU5jMt1G7gZq0U0i3bJrLGHWU=';
@@ -314,7 +315,8 @@
             // --- SDK INITIALIZATION ---
             const imagekit = new ImageKit({
                 publicKey: IMAGEKIT_PUBLIC_KEY,
-                urlEndpoint: IMAGEKIT_URL_ENDPOINT
+                urlEndpoint: IMAGEKIT_URL_ENDPOINT,
+                authenticationEndpoint: '/imagekit-auth'
             });
 
             // --- DOM ELEMENTS ---
@@ -563,33 +565,13 @@
                 return JSON.parse(jsonText);
             };
 
-            const uploadToImageKit = (file) => {
-                if (!file) {
-                    return Promise.resolve(null);
-                }
-
-                if (!isValidImageFile(file)) {
-                    console.warn('Skipping upload to ImageKit: file is not a supported image.', { fileName: file.name, fileType: file.type });
-                    showToast('Файл не відповідає вимогам зображення і не буде надісланий.', 'error');
-                    clearSelectedFile();
-                    return Promise.resolve(null);
-                }
-
-                return new Promise((resolve, reject) => {
-                    imagekit.upload({
-                        file: file,
-                        fileName: file.name,
-                        tags: [`feedback,${currentCategory}`],
-                    }, (error, result) => {
-                        if (error) {
-                            console.error("ImageKit SDK Upload Error:", error);
-                            reject(new Error(error.message || 'ImageKit SDK upload failed'));
-                        } else {
-                            resolve(result.url);
-                        }
-                    });
-                });
-            };
+            const uploadToImageKit = createUploadToImageKit({
+                imagekit,
+                isValidImageFile,
+                showToast,
+                clearSelectedFile,
+                getCurrentCategory: () => currentCategory,
+            });
 
             const isLikelyCorsError = (error) => {
                 if (!(error instanceof TypeError)) return false;
