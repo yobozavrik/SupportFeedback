@@ -776,6 +776,7 @@
             achievementsBtn.addEventListener('click', () => {
                 renderAchievements();
                 achievementsModal.classList.remove('hidden');
+                achievementsModal.classList.remove('modal-leave');
                 achievementsModal.classList.add('modal-enter');
             });
             closeAchievementsModalBtn.addEventListener('click', () => closeModal(achievementsModal));
