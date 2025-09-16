@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зворотний зв'язок | Галя Балувана</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fff7ed 0%, #fff1e1 100%);
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        .modal-leave { animation: fadeOut 0.3s ease-in forwards; }
+        .toast-enter { animation: slideInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .toast-leave { animation: slideOutDown 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; }
+        .content-enter { animation: fadeInUp 0.5s ease-out forwards; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideOutDown {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(100%); opacity: 0; }
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        .ai-loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #f97316;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #product-suggestions div:hover {
+            background-color: #f97316;
+            color: white;
+        }
+        .star-rating .star { color: #d1d5db; transition: color 0.2s; }
+        .star-rating .star.selected, .star-rating:hover .star:hover ~ .star, .star-rating:hover .star:hover { color: #f59e0b; }
+        .star-rating:hover .star { color: #f59e0b; }
+        .faq-question svg { transition: transform 0.3s ease; }
+        .faq-question.open svg { transform: rotate(180deg); }
+        .achievement-progress-bar { background-color: #e5e7eb; border-radius: 9999px; height: 8px; width: 100%; overflow: hidden; }
+        .achievement-progress { background-color: #22c55e; height: 100%; transition: width 0.5s ease-in-out; }
+        .category-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-orange-50 text-gray-800">
+
+    <div class="container mx-auto max-w-lg min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <header class="text-center mb-8 content-enter" style="animation-delay: 100ms;">
+            <h1 class="text-4xl font-bold text-orange-600">Галя Балувана</h1>
+            <p class="text-gray-600 mt-2">Ми цінуємо вашу думку! Залиште відгук.</p>
+        </header>
+
+        <main class="w-full content-enter" style="animation-delay: 200ms;">
+            <div class="grid grid-cols-2 gap-4">
+                
+                <button data-category="Скарга" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 text-red-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                    </div>
+                    <span class="font-semibold text-gray-700">Скарга</span>
+                </button>
+
+                <button data-category="Немає продукції" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
+                     <div class="w-12 h-12 text-blue-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+                    </div>
+                    <span class="font-semibold text-gray-700">Немає продукції</span>
+                </button>
+
+                <button data-category="Пропозиція" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 text-yellow-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a7.5 7.5 0 01-7.5 0c-1.255 0-2.42.292-3.5.834m14.5-10.334a24.017 24.017 0 01-14.5 0" /></svg>
+                    </div>
+                    <span class="font-semibold text-gray-700">Пропозиція</span>
+                </button>
+
+                <button data-category="Співпраця" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 text-green-500 mb-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                    </div>
+                    <span class="font-semibold text-gray-700">Співпраця</span>
+                </button>
+
+                <button data-category="Подякувати продавцю" class="col-span-2 category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 text-pink-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-gray-700">Подякувати продавцю</span>
+                </button>
+            </div>
+        </main>
+
+        <section id="faq-section" class="w-full mt-8 glassmorphism p-6 rounded-2xl shadow-lg content-enter" style="animation-delay: 300ms;">
+            <h2 class="text-xl font-bold text-center mb-4 text-gray-800">Часті запитання</h2>
+            <div class="space-y-2">
+                <div class="faq-item">
+                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 transition">
+                        <span>Як дізнатися склад продукту?</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-answer hidden p-3 pt-0 text-gray-600">
+                        <p>Повний склад кожного продукту вказаний на етикетці. Також ви можете запитати у наших продавців-консультантів у магазині.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 transition">
+                        <span>Чи є у вас доставка?</span>
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-answer hidden p-3 pt-0 text-gray-600">
+                        <p>Наразі ми працюємо над запуском власної служби доставки. Слідкуйте за оновленнями на наших сторінках у соціальних мережах!</p>
+                    </div>
+                </div>
+                 <div class="faq-item">
+                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 transition">
+                        <span>Де знайти найближчий магазин?</span>
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-answer hidden p-3 pt-0 text-gray-600">
+                        <p>Карта всіх наших магазинів доступна на офіційному сайті. Ми постійно розширюємо нашу мережу, щоб бути ближчими до вас.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="w-full mt-8 text-center content-enter" style="animation-delay: 400ms;">
+            <div class="flex justify-center items-center space-x-6 mb-4">
+                <a href="https://www.instagram.com/galia_baluvana_official/" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C8.74 2 8.333.015 7.053.072 5.775.13 4.905.333 4.14.63c-.784.305-1.48.77-2.126 1.414a4.862 4.862 0 00-1.414 2.126c-.3.765-.5 1.635-.558 2.913C.015 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.26 2.148.558 2.913a4.862 4.862 0 001.414 2.126c.646.646 1.342 1.11 2.126 1.414.765.3 1.635.5 2.913.558C8.333 23.985 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.26 2.913-.558a4.862 4.862 0 002.126-1.414c.646-.646 1.11-1.342 1.414-2.126.3-.765.5-1.635.558-2.913.058-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.26-2.148-.558-2.913a4.862 4.862 0 00-1.414-2.126A4.862 4.862 0 0019.053.63c-.765-.3-1.635-.5-2.913-.558C15.667.015 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.07 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.056 1.265.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.056 1.17-.249 1.805-.413 2.227a3.48 3.48 0 01-.896 1.382c-.42.419-.82.679-1.381.896-.422.164-1.057.36-2.227.413-1.265.056-1.646.07-4.85.07s-3.585-.015-4.85-.07c-1.17-.056-1.805-.249-2.227-.413a3.482 3.482 0 01-1.382-.896c-.419-.42-.679-.82-.896-1.381-.164-.422-.36-1.057-.413-2.227-.056-1.265-.07-1.646-.07-4.85s.015-3.585.07-4.85c.055-1.17.249-1.805.413-2.227.217-.562.477-.96.896-1.382.42-.419.819-.679 1.381-.896.422-.164 1.057-.36 2.227-.413C8.415 2.176 8.797 2.16 12 2.16zm0 5.188a4.652 4.652 0 100 9.304 4.652 4.652 0 000-9.304zm0 7.143a2.49 2.49 0 110-4.98 2.49 2.49 0 010 4.98zm6.406-7.844a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z" clip-rule="evenodd" /></svg>
+                    <span class="mt-1 text-xs">Instagram</span>
+                </a>
+                 <button id="achievements-btn" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    <span class="mt-1 text-xs">Мої досягнення</span>
+                </button>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <span class="mt-1 text-xs">Наш додаток</span>
+                </a>
+            </div>
+            <p class="mt-4 text-xs text-gray-400">© 2025 Галя Балувана. Всі права захищені.</p>
+        </footer>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="glassmorphism rounded-2xl shadow-xl w-full max-w-md p-6 md:p-8 overflow-y-auto max-h-screen">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800"></h2>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="feedback-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Наскільки ви задоволені?</label>
+                    <div id="satisfaction-rating" class="star-rating flex items-center justify-center text-4xl cursor-pointer" data-rating="0">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                </div>
+                
+                <div id="product-section" class="hidden mb-4 relative">
+                    <label for="product-input" class="block text-sm font-medium text-gray-700 mb-1">Продукт (необов'язково):</label>
+                    <input type="text" id="product-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Почніть вводити назву...">
+                    <div id="product-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg mt-1 max-h-40 overflow-y-auto shadow-lg hidden"></div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="feedback-text" class="block text-sm font-medium text-gray-700">Ваше повідомлення:</label>
+                        <button type="button" id="ai-assist-btn" class="text-xs text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-1">
+                            <span id="ai-assist-btn-text">✨ Допомога AI</span>
+                            <div id="ai-assist-loader" class="ai-loader hidden"></div>
+                        </button>
+                    </div>
+                    <textarea id="feedback-text" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Опишіть детальніше..." required></textarea>
+                </div>
+
+                <div id="ai-results-section" class="hidden mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Аналіз від AI:</p>
+                    <div id="ai-sentiment" class="text-sm mb-2"></div>
+                    <div id="ai-summary" class="text-sm mb-2"></div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-600 mb-1">Що можна додати:</p>
+                        <ul id="ai-suggestions" class="list-disc list-inside text-xs text-gray-500 space-y-1"></ul>
+                    </div>
+                </div>
+                
+                <div id="photo-upload-section" class="hidden mb-4">
+                     <label for="photo-upload-btn" class="block text-sm font-medium text-gray-700 mb-1">Прикріпити фото:</label>
+                     <input type="file" id="photo-upload-input" class="hidden" accept="image/*">
+                     <button type="button" id="photo-upload-btn" class="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 hover:border-orange-500 hover:text-orange-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>Обрати файл</span>
+                     </button>
+                     <div id="photo-preview-container" class="mt-4 hidden">
+                         <img id="photo-preview" src="" alt="Photo preview" class="max-h-40 rounded-lg mx-auto"/>
+                     </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="phone-input" class="block text-sm font-medium text-gray-700 mb-1">Ваш телефон (необов'язково):</label>
+                    <input type="tel" id="phone-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Для зворотного зв'язку">
+                </div>
+
+                <div class="mb-6 flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="consent-checkbox" name="consent" type="checkbox" class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 rounded" required>
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="consent-checkbox" class="font-medium text-gray-700">Я даю згоду на обробку моїх персональних даних.</label>
+                    </div>
+                </div>
+
+                <button id="submit-btn" type="submit" class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors duration-300 flex items-center justify-center">
+                    <span id="submit-btn-text">Відправити</span>
+                    <div id="submit-loader" class="loader hidden"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+     <!-- Achievements Modal -->
+    <div id="achievements-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="glassmorphism rounded-2xl shadow-xl w-full max-w-md p-6 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Мої досягнення</h2>
+                <button id="close-achievements-modal-btn" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="achievements-list" class="space-y-4">
+                <!-- Achievements will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50">
+        <!-- Toast messages will be injected here -->
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            const IMAGEKIT_PUBLIC_KEY = 'public_I3pU5jMt1G7gZq0U0i3bJrLGHWU=';
+            const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/galabaluvana';
+            const N8N_WEBHOOK_URL = 'https://n8n.dmytrotovstytskyi.online/webhook-test/supporttest'; // REAL URL
+            const GEMINI_API_KEY = ''; // The build environment will provide this key.
+            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+            const MOCK_PRODUCT_LIST = [
+                "Пельмені зі свининою", "Пельмені з яловичиною", "Пельмені з куркою", "Пельмені дитячі",
+                "Вареники з картоплею", "Вареники з капустою", "Вареники з вишнею", "Вареники з сиром солодкі",
+                "Хінкалі", "Равіолі", "Млинці з м'ясом", "Млинці з сиром", "Сирники", "Котлети домашні",
+                "Голубці", "Перець фарширований", "Чебуреки", "Борщ", "Суп-харчо"
+            ];
+            const SECRET_SHOPPER_GOAL = 3;
+
+            // --- SDK INITIALIZATION ---
+            const imagekit = new ImageKit({
+                publicKey: IMAGEKIT_PUBLIC_KEY,
+                urlEndpoint: IMAGEKIT_URL_ENDPOINT
+            });
+
+            // --- DOM ELEMENTS ---
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const modal = document.getElementById('feedback-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const feedbackForm = document.getElementById('feedback-form');
+            const toastContainer = document.getElementById('toast');
+            const faqItems = document.querySelectorAll('.faq-item');
+            const achievementsBtn = document.getElementById('achievements-btn');
+            const achievementsModal = document.getElementById('achievements-modal');
+            const closeAchievementsModalBtn = document.getElementById('close-achievements-modal-btn');
+            const achievementsList = document.getElementById('achievements-list');
+            
+            // --- STATE ---
+            let currentCategory = '';
+            let selectedFile = null;
+            let storeId = 'unknown_store';
+            let satisfactionRating = 0;
+            let userGeolocation = null;
+            let userId = null;
+            let userAchievements = null;
+
+            // --- INITIALIZATION ---
+            const initializeUser = () => {
+                userId = localStorage.getItem('gala-userId');
+                if (!userId) {
+                    userId = crypto.randomUUID();
+                    localStorage.setItem('gala-userId', userId);
+                }
+
+                const achievementsData = localStorage.getItem('gala-userAchievements');
+                if (!achievementsData) {
+                    userAchievements = {
+                        secretShopper: { earned: false, stores: [] }
+                    };
+                    localStorage.setItem('gala-userAchievements', JSON.stringify(userAchievements));
+                } else {
+                    userAchievements = JSON.parse(achievementsData);
+                }
+            };
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            storeId = urlParams.get('store_id') || 'unknown_store';
+            initializeUser();
+
+
+            // --- FUNCTIONS ---
+            const getGeolocation = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userGeolocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                            };
+                        },
+                        (error) => {
+                            console.warn(`Geolocation error: ${error.message}`);
+                            userGeolocation = null;
+                        }
+                    );
+                }
+            };
+
+            const openModal = (category) => {
+                currentCategory = category;
+                modalTitle.textContent = category;
+                
+                const productSection = document.getElementById('product-section');
+                const photoUploadSection = document.getElementById('photo-upload-section');
+
+                if (category === 'Скарга' || category === 'Немає продукції') {
+                    productSection.classList.remove('hidden');
+                } else {
+                    productSection.classList.add('hidden');
+                }
+
+                if (category === 'Скарга') {
+                    photoUploadSection.classList.remove('hidden');
+                } else {
+                    photoUploadSection.classList.add('hidden');
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('modal-enter');
+                modal.classList.remove('modal-leave');
+                getGeolocation();
+            };
+
+            const closeModal = (modalElement) => {
+                modalElement.classList.add('modal-leave');
+                modalElement.classList.remove('modal-enter');
+                setTimeout(() => {
+                    modalElement.classList.add('hidden');
+                    if (modalElement.id === 'feedback-modal') {
+                        resetForm();
+                    }
+                }, 300);
+            };
+
+            const resetForm = () => {
+                feedbackForm.reset();
+                document.getElementById('photo-preview-container').classList.add('hidden');
+                document.getElementById('ai-results-section').classList.add('hidden');
+                document.getElementById('product-suggestions').innerHTML = '';
+                document.getElementById('product-suggestions').classList.add('hidden');
+                document.getElementById('photo-preview').src = '';
+                selectedFile = null;
+                currentCategory = '';
+                satisfactionRating = 0;
+                userGeolocation = null;
+                updateStarRating(0);
+            };
+            
+            const handleFileSelect = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    selectedFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('photo-preview').src = e.target.result;
+                        document.getElementById('photo-preview-container').classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            const showLoading = (isLoading, element = 'submit') => {
+                const btn = document.getElementById('submit-btn');
+                const btnText = document.getElementById('submit-btn-text');
+                const loader = document.getElementById('submit-loader');
+                
+                const aiBtn = document.getElementById('ai-assist-btn');
+                const aiBtnText = document.getElementById('ai-assist-btn-text');
+                const aiLoader = document.getElementById('ai-assist-loader');
+
+                 if (element === 'submit') {
+                    btnText.classList.toggle('hidden', isLoading);
+                    loader.classList.toggle('hidden', !isLoading);
+                    btn.disabled = isLoading;
+                } else if (element === 'ai') {
+                    aiBtnText.classList.toggle('hidden', isLoading);
+                    aiLoader.classList.toggle('hidden', !isLoading);
+                    aiBtn.disabled = isLoading;
+                }
+            };
+            
+            const showToast = (message, type = 'success') => {
+                const toastId = `toast-${Date.now()}`;
+                const colors = {
+                    success: 'bg-green-500',
+                    achievement: 'bg-yellow-500'
+                };
+                const icon = type === 'achievement' ? '🏆' : '✅';
+                const toastElement = document.createElement('div');
+                toastElement.id = toastId;
+                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
+                toastElement.innerHTML = `<p>${icon} ${message}</p>`;
+                
+                toastContainer.appendChild(toastElement);
+
+                setTimeout(() => {
+                    toastElement.classList.add('toast-leave');
+                    toastElement.classList.remove('toast-enter');
+                    setTimeout(() => toastElement.remove(), 500);
+                }, 5000);
+            };
+            
+            const getAiAnalysis = async (text) => {
+                const systemPrompt = "Ти — доброзичливий AI-асистент компанії 'Галя Балувана'. Твоя мета — допомогти клієнтам написати чіткий та конструктивний відгук. Проаналізуй текст користувача та надай настрій відгуку, коротке резюме та три конкретні поради щодо покращення українською мовою. Відповідай ТІЛЬКИ у форматі JSON згідно зі схемою.";
+                const payload = {
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    contents: [{ parts: [{ text }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                sentiment: { type: "STRING" },
+                                summary: { type: "STRING" },
+                                suggestions: { type: "ARRAY", items: { type: "STRING" } }
+                            },
+                            required: ["sentiment", "summary", "suggestions"]
+                        }
+                    }
+                };
+                
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("Gemini API Error Response:", errorBody);
+                    throw new Error('Не вдалося отримати відповідь від AI.');
+                }
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) {
+                   throw new Error('Відповідь AI має невірний формат.');
+                }
+                return JSON.parse(jsonText);
+            };
+
+            const uploadToImageKit = (file) => {
+                return new Promise((resolve, reject) => {
+                    imagekit.upload({
+                        file: file,
+                        fileName: file.name,
+                        tags: [`feedback,${currentCategory}`],
+                    }, (error, result) => {
+                        if (error) {
+                            console.error("ImageKit SDK Upload Error:", error);
+                            reject(new Error(error.message || 'ImageKit SDK upload failed'));
+                        } else {
+                            resolve(result.url);
+                        }
+                    });
+                });
+            };
+
+            const handleSubmit = async (event) => {
+                event.preventDefault();
+                showLoading(true, 'submit');
+
+                let imageUrl = null;
+                const applicationId = `GB-${Date.now().toString(36).toUpperCase()}`;
+
+                try {
+                    if (selectedFile) {
+                        imageUrl = await uploadToImageKit(selectedFile);
+                    }
+
+                    const feedbackData = {
+                        userId: userId,
+                        applicationId: applicationId,
+                        storeId: storeId,
+                        category: currentCategory,
+                        rating: satisfactionRating,
+                        product: document.getElementById('product-input').value || null,
+                        text: document.getElementById('feedback-text').value,
+                        imageUrl: imageUrl,
+                        phone: document.getElementById('phone-input').value || null,
+                        geolocation: userGeolocation
+                    };
+
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(feedbackData),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    closeModal(modal);
+                    showToast(`Дякуємо! Номер вашого звернення: ${applicationId}`);
+                    trackStoreVisit(storeId);
+
+                } catch (error) {
+                    console.error('There was a problem:', error);
+                    alert(`Виникла помилка під час відправки: ${error.message}. Спробуйте, будь ласка, ще раз.`);
+                } finally {
+                    showLoading(false, 'submit');
+                }
+            };
+            
+             const handleAiAssist = async () => {
+                const text = document.getElementById('feedback-text').value;
+                if (text.trim().length < 10) {
+                    alert('Будь ласка, напишіть хоча б декілька слів для аналізу.');
+                    return;
+                }
+                showLoading(true, 'ai');
+                document.getElementById('ai-results-section').classList.add('hidden');
+
+                try {
+                    const analysis = await getAiAnalysis(text);
+                    document.getElementById('ai-sentiment').textContent = `Настрій відгуку: ${analysis.sentiment || 'Не визначено'}`;
+                    document.getElementById('ai-summary').textContent = `Ключова думка: ${analysis.summary || '–'}`;
+                    const suggestionsEl = document.getElementById('ai-suggestions');
+                    suggestionsEl.innerHTML = '';
+                    (analysis.suggestions || []).forEach(suggestion => {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        suggestionsEl.appendChild(li);
+                    });
+                    document.getElementById('ai-results-section').classList.remove('hidden');
+                } catch (error) {
+                    console.error('AI Assist Error:', error);
+                    alert(`Помилка аналізу: ${error.message}`);
+                } finally {
+                    showLoading(false, 'ai');
+                }
+            };
+            
+            const handleProductAutocomplete = (event) => {
+                const value = event.target.value.toLowerCase();
+                const suggestionsEl = document.getElementById('product-suggestions');
+                suggestionsEl.innerHTML = '';
+                if (value.length < 2) {
+                    suggestionsEl.classList.add('hidden');
+                    return;
+                }
+
+                const filteredProducts = MOCK_PRODUCT_LIST.filter(p => p.toLowerCase().includes(value));
+                
+                if (filteredProducts.length > 0) {
+                    suggestionsEl.classList.remove('hidden');
+                    filteredProducts.forEach(product => {
+                        const div = document.createElement('div');
+                        div.textContent = product;
+                        div.className = 'p-2 cursor-pointer transition-colors duration-200';
+                        div.onclick = () => {
+                            document.getElementById('product-input').value = product;
+                            suggestionsEl.innerHTML = '';
+                            suggestionsEl.classList.add('hidden');
+                        };
+                        suggestionsEl.appendChild(div);
+                    });
+                } else {
+                    suggestionsEl.classList.add('hidden');
+                }
+            };
+
+            const updateStarRating = (rating) => {
+                document.querySelectorAll('#satisfaction-rating .star').forEach(star => {
+                    star.classList.toggle('selected', star.dataset.value <= rating);
+                });
+            };
+
+            const trackStoreVisit = (storeId) => {
+                if (storeId === 'unknown_store' || !userAchievements.secretShopper) return;
+                
+                const { stores, earned } = userAchievements.secretShopper;
+                if (!stores.includes(storeId)) {
+                    stores.push(storeId);
+                    userAchievements.secretShopper.stores = stores;
+                    localStorage.setItem('gala-userAchievements', JSON.stringify(userAchievements));
+                    checkSecretShopperAchievement();
+                }
+            };
+
+            const checkSecretShopperAchievement = () => {
+                const { stores, earned } = userAchievements.secretShopper;
+                if (!earned && stores.length >= SECRET_SHOPPER_GOAL) {
+                    userAchievements.secretShopper.earned = true;
+                    localStorage.setItem('gala-userAchievements', JSON.stringify(userAchievements));
+                    showToast("Ви отримали досягнення 'Таємний покупець'!", 'achievement');
+                }
+            };
+
+            const renderAchievements = () => {
+                const { stores, earned } = userAchievements.secretShopper;
+                const progress = Math.min(stores.length, SECRET_SHOPPER_GOAL);
+                const isCompleted = earned || progress >= SECRET_SHOPPER_GOAL;
+
+                const achievementHTML = `
+                    <div class="border rounded-lg p-4 ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-gray-50'}">
+                        <div class="flex items-center">
+                            <div class="text-4xl mr-4">${isCompleted ? '🏆' : '🕵️'}</div>
+                            <div>
+                                <h3 class="font-bold text-lg ${isCompleted ? 'text-green-700' : 'text-gray-800'}">Таємний покупець</h3>
+                                <p class="text-sm text-gray-600">Залиште відгуки з ${SECRET_SHOPPER_GOAL} різних магазинів.</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex justify-between text-sm font-medium ${isCompleted ? 'text-green-700' : 'text-gray-700'} mb-1">
+                                <span>Прогрес</span>
+                                <span>${progress} / ${SECRET_SHOPPER_GOAL}</span>
+                            </div>
+                            <div class="achievement-progress-bar">
+                                <div class="achievement-progress" style="width: ${(progress / SECRET_SHOPPER_GOAL) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                achievementsList.innerHTML = achievementHTML;
+            };
+            
+            // --- EVENT LISTENERS BINDING ---
+            categoryButtons.forEach(button => button.addEventListener('click', () => openModal(button.dataset.category)));
+            closeModalBtn.addEventListener('click', () => closeModal(modal));
+            modal.addEventListener('click', (e) => { if (e.target.id === 'feedback-modal') closeModal(modal); });
+            
+            achievementsBtn.addEventListener('click', () => {
+                renderAchievements();
+                achievementsModal.classList.remove('hidden');
+                achievementsModal.classList.add('modal-enter');
+            });
+            closeAchievementsModalBtn.addEventListener('click', () => closeModal(achievementsModal));
+            achievementsModal.addEventListener('click', (e) => { if (e.target.id === 'achievements-modal') closeModal(achievementsModal); });
+
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                const answer = item.querySelector('.faq-answer');
+                question.addEventListener('click', () => {
+                    answer.classList.toggle('hidden');
+                    question.classList.toggle('open');
+                });
+            });
+
+            feedbackForm.addEventListener('submit', handleSubmit);
+            document.getElementById('ai-assist-btn').addEventListener('click', handleAiAssist);
+            document.getElementById('photo-upload-btn').addEventListener('click', () => document.getElementById('photo-upload-input').click());
+            document.getElementById('photo-upload-input').addEventListener('change', handleFileSelect);
+            document.getElementById('product-input').addEventListener('input', handleProductAutocomplete);
+            
+            document.querySelectorAll('#satisfaction-rating .star').forEach(star => {
+                star.addEventListener('click', () => {
+                    satisfactionRating = parseInt(star.dataset.value);
+                    document.getElementById('satisfaction-rating').dataset.rating = satisfactionRating;
+                    updateStarRating(satisfactionRating);
+                });
+                star.addEventListener('mouseover', () => {
+                    const rating = parseInt(star.dataset.value);
+                    updateStarRating(rating);
+                });
+            });
+            document.getElementById('satisfaction-rating').addEventListener('mouseleave', () => {
+                updateStarRating(satisfactionRating);
+            });
+        });
+    </script>
+</body>
+</html>
+
