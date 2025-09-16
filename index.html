@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Зворотний зв'язок | Галя Балувана</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -298,7 +297,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const IMAGEKIT_PUBLIC_KEY = 'public_I3pU5jMt1G7gZq0U0i3bJrLGHWU=';
             const N8N_WEBHOOK_URL = 'https://n8n.dmytrotovstytskyi.online/webhook/supporttest';
             const GEMINI_API_KEY = ''; // The build environment will provide this key.
             const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
