@@ -51,6 +51,14 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
+        .ai-loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #f97316;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -209,11 +217,22 @@
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
                         <label for="feedback-text" class="block text-sm font-medium text-gray-700">Ваше повідомлення:</label>
-                        <a href="https://t.me/galiabaluvana_support" target="_blank" rel="noopener noreferrer" class="text-xs text-orange-600 hover:text-orange-800 font-semibold">
-                            Потрібна допомога? Напишіть у підтримку
-                        </a>
+                        <button type="button" id="ai-assist-btn" class="text-xs text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-1">
+                            <span id="ai-assist-btn-text">✨ Допомога AI</span>
+                            <div id="ai-assist-loader" class="ai-loader hidden"></div>
+                        </button>
                     </div>
                     <textarea id="feedback-text" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Опишіть детальніше..." required></textarea>
+                </div>
+
+                <div id="ai-results-section" class="hidden mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Аналіз від AI:</p>
+                    <div id="ai-sentiment" class="text-sm mb-2"></div>
+                    <div id="ai-summary" class="text-sm mb-2"></div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-600 mb-1">Що можна додати:</p>
+                        <ul id="ai-suggestions" class="list-disc list-inside text-xs text-gray-500 space-y-1"></ul>
+                    </div>
                 </div>
                 
                 <div id="photo-upload-section" class="hidden mb-4">
@@ -280,8 +299,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
             const IMAGEKIT_PUBLIC_KEY = 'public_I3pU5jMt1G7gZq0U0i3bJrLGHWU=';
-            const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/galabaluvana';
-            const N8N_WEBHOOK_URL = 'https://n8n.dmytrotovstytskyi.online/webhook/supporttest'; // Production webhook endpoint
+            const N8N_WEBHOOK_URL = 'https://n8n.dmytrotovstytskyi.online/webhook/supporttest';
+            const GEMINI_API_KEY = ''; // The build environment will provide this key.
+            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
             const MOCK_PRODUCT_LIST = [
                 "Пельмені зі свининою", "Пельмені з яловичиною", "Пельмені з куркою", "Пельмені дитячі",
                 "Вареники з картоплею", "Вареники з капустою", "Вареники з вишнею", "Вареники з сиром солодкі",
@@ -289,12 +309,6 @@
                 "Голубці", "Перець фарширований", "Чебуреки", "Борщ", "Суп-харчо"
             ];
             const SECRET_SHOPPER_GOAL = 3;
-
-            // --- SDK INITIALIZATION ---
-            const imagekit = new ImageKit({
-                publicKey: IMAGEKIT_PUBLIC_KEY,
-                urlEndpoint: IMAGEKIT_URL_ENDPOINT
-            });
 
             // --- DOM ELEMENTS ---
             const categoryButtons = document.querySelectorAll('.category-btn');
@@ -343,32 +357,6 @@
 
 
             // --- FUNCTIONS ---
-            const IMAGE_FILE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tif', 'tiff', 'svg', 'heic', 'heif', 'avif']);
-
-            const isValidImageFile = (file) => {
-                if (!file) return false;
-                if (file.type && file.type.startsWith('image/')) return true;
-                const fileName = file.name || '';
-                const extension = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
-                return IMAGE_FILE_EXTENSIONS.has(extension);
-            };
-
-            const clearSelectedFile = () => {
-                const fileInput = document.getElementById('photo-upload-input');
-                if (fileInput) {
-                    fileInput.value = '';
-                }
-                const previewImage = document.getElementById('photo-preview');
-                if (previewImage) {
-                    previewImage.src = '';
-                }
-                const previewContainer = document.getElementById('photo-preview-container');
-                if (previewContainer) {
-                    previewContainer.classList.add('hidden');
-                }
-                selectedFile = null;
-            };
-
             const getGeolocation = () => {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
@@ -424,10 +412,12 @@
 
             const resetForm = () => {
                 feedbackForm.reset();
-                clearSelectedFile();
-                const suggestionsEl = document.getElementById('product-suggestions');
-                suggestionsEl.innerHTML = '';
-                suggestionsEl.classList.add('hidden');
+                document.getElementById('photo-preview-container').classList.add('hidden');
+                document.getElementById('ai-results-section').classList.add('hidden');
+                document.getElementById('product-suggestions').innerHTML = '';
+                document.getElementById('product-suggestions').classList.add('hidden');
+                document.getElementById('photo-preview').src = '';
+                selectedFile = null;
                 currentCategory = '';
                 satisfactionRating = 0;
                 userGeolocation = null;
@@ -435,55 +425,50 @@
             };
             
             const handleFileSelect = (event) => {
-                const fileInput = event.target;
-                const file = fileInput.files[0];
-
-                if (!file) {
-                    clearSelectedFile();
-                    return;
+                const file = event.target.files[0];
+                if (file) {
+                    selectedFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('photo-preview').src = e.target.result;
+                        document.getElementById('photo-preview-container').classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
                 }
-
-                if (!isValidImageFile(file)) {
-                    console.warn('Rejected file selection: not an image.', { fileName: file.name, fileType: file.type });
-                    showToast('Дозволено завантажувати лише файли зображень.', 'error');
-                    clearSelectedFile();
-                    return;
-                }
-
-                selectedFile = file;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('photo-preview').src = e.target.result;
-                    document.getElementById('photo-preview-container').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
             };
             
-            const showLoading = (isLoading) => {
+            const showLoading = (isLoading, element = 'submit') => {
                 const btn = document.getElementById('submit-btn');
                 const btnText = document.getElementById('submit-btn-text');
                 const loader = document.getElementById('submit-loader');
+                
+                const aiBtn = document.getElementById('ai-assist-btn');
+                const aiBtnText = document.getElementById('ai-assist-btn-text');
+                const aiLoader = document.getElementById('ai-assist-loader');
 
-                btnText.classList.toggle('hidden', isLoading);
-                loader.classList.toggle('hidden', !isLoading);
-                btn.disabled = isLoading;
+                 if (element === 'submit') {
+                    btnText.classList.toggle('hidden', isLoading);
+                    loader.classList.toggle('hidden', !isLoading);
+                    btn.disabled = isLoading;
+                } else if (element === 'ai') {
+                    aiBtnText.classList.toggle('hidden', isLoading);
+                    aiLoader.classList.toggle('hidden', !isLoading);
+                    aiBtn.disabled = isLoading;
+                }
             };
             
             const showToast = (message, type = 'success') => {
                 const toastId = `toast-${Date.now()}`;
-                const toastStyles = {
-                    success: { color: 'bg-green-500', icon: '✅' },
-                    achievement: { color: 'bg-yellow-500', icon: '🏆' },
-                    error: { color: 'bg-red-500', icon: '⚠️' }
+                const colors = {
+                    success: 'bg-green-500',
+                    achievement: 'bg-yellow-500'
                 };
-                const { color, icon } = toastStyles[type] || toastStyles.success;
+                const icon = type === 'achievement' ? '🏆' : '✅';
                 const toastElement = document.createElement('div');
                 toastElement.id = toastId;
-                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${color} toast-enter`;
-                const toastMessage = document.createElement('p');
-                toastMessage.textContent = `${icon} ${message}`;
-                toastElement.appendChild(toastMessage);
-
+                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
+                toastElement.innerHTML = `<p>${icon} ${message}</p>`;
+                
                 toastContainer.appendChild(toastElement);
 
                 setTimeout(() => {
@@ -493,80 +478,70 @@
                 }, 5000);
             };
             
-            const uploadToImageKit = (file) => {
-                if (!file) {
-                    return Promise.resolve(null);
-                }
-
-                if (!isValidImageFile(file)) {
-                    console.warn('Skipping upload to ImageKit: file is not a supported image.', { fileName: file.name, fileType: file.type });
-                    showToast('Файл не відповідає вимогам зображення і не буде надісланий.', 'error');
-                    clearSelectedFile();
-                    return Promise.resolve(null);
-                }
-
-                return new Promise((resolve, reject) => {
-                    imagekit.upload({
-                        file: file,
-                        fileName: file.name,
-                        tags: [`feedback,${currentCategory}`],
-                    }, (error, result) => {
-                        if (error) {
-                            console.error("ImageKit SDK Upload Error:", error);
-                            reject(new Error(error.message || 'ImageKit SDK upload failed'));
-                        } else {
-                            resolve(result.url);
+            const getAiAnalysis = async (text) => {
+                const systemPrompt = "Ти — доброзичливий AI-асистент компанії 'Галя Балувана'. Твоя мета — допомогти клієнтам написати чіткий та конструктивний відгук. Проаналізуй текст користувача та надай настрій відгуку, коротке резюме та три конкретні поради щодо покращення українською мовою. Відповідай ТІЛЬКИ у форматі JSON згідно зі схемою.";
+                const payload = {
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    contents: [{ parts: [{ text }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                sentiment: { type: "STRING" },
+                                summary: { type: "STRING" },
+                                suggestions: { type: "ARRAY", items: { type: "STRING" } }
+                            },
+                            required: ["sentiment", "summary", "suggestions"]
                         }
-                    });
+                    }
+                };
+                
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
-            };
 
-            const isLikelyCorsError = (error) => {
-                if (!(error instanceof TypeError)) return false;
-                const message = error?.message ?? '';
-                return /Failed to fetch|NetworkError|Load failed/i.test(message);
-            };
-
-            const buildSubmissionErrorMessage = (error) => {
-                const messageText = error?.message || 'невідома помилка';
-                const baseMessage = `Виникла помилка під час відправки: ${messageText}. Спробуйте, будь ласка, ще раз.`;
-
-                if (isLikelyCorsError(error)) {
-                    return `${baseMessage}\n\nПідказка: браузер заблокував запит через політику CORS. Переконайтеся, що вебхук n8n повертає заголовок Access-Control-Allow-Origin для домену цього віджета.`;
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("Gemini API Error Response:", errorBody);
+                    throw new Error('Не вдалося отримати відповідь від AI.');
                 }
-
-                return baseMessage;
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) {
+                   throw new Error('Відповідь AI має невірний формат.');
+                }
+                return JSON.parse(jsonText);
             };
-
+            
             const handleSubmit = async (event) => {
                 event.preventDefault();
-                showLoading(true);
+                showLoading(true, 'submit');
 
-                let imageUrl = null;
                 const applicationId = `GB-${Date.now().toString(36).toUpperCase()}`;
+                const formData = new FormData();
+
+                formData.append('userId', userId);
+                formData.append('applicationId', applicationId);
+                formData.append('storeId', storeId);
+                formData.append('category', currentCategory);
+                formData.append('rating', satisfactionRating);
+                formData.append('product', document.getElementById('product-input').value || null);
+                formData.append('text', document.getElementById('feedback-text').value);
+                formData.append('phone', document.getElementById('phone-input').value || null);
+                if (userGeolocation) {
+                    formData.append('geolocation', JSON.stringify(userGeolocation));
+                }
+                if (selectedFile) {
+                    formData.append('file', selectedFile);
+                }
 
                 try {
-                    if (selectedFile) {
-                        imageUrl = await uploadToImageKit(selectedFile);
-                    }
-
-                    const feedbackData = {
-                        userId: userId,
-                        applicationId: applicationId,
-                        storeId: storeId,
-                        category: currentCategory,
-                        rating: satisfactionRating,
-                        product: document.getElementById('product-input').value || null,
-                        text: document.getElementById('feedback-text').value,
-                        imageUrl: imageUrl,
-                        phone: document.getElementById('phone-input').value || null,
-                        geolocation: userGeolocation
-                    };
-
                     const response = await fetch(N8N_WEBHOOK_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(feedbackData),
+                        body: formData,
                     });
 
                     if (!response.ok) {
@@ -579,9 +554,38 @@
 
                 } catch (error) {
                     console.error('There was a problem:', error);
-                    alert(buildSubmissionErrorMessage(error));
+                    alert(`Виникла помилка під час відправки: ${error.message}. Спробуйте, будь ласка, ще раз.`);
                 } finally {
-                    showLoading(false);
+                    showLoading(false, 'submit');
+                }
+            };
+            
+             const handleAiAssist = async () => {
+                const text = document.getElementById('feedback-text').value;
+                if (text.trim().length < 10) {
+                    alert('Будь ласка, напишіть хоча б декілька слів для аналізу.');
+                    return;
+                }
+                showLoading(true, 'ai');
+                document.getElementById('ai-results-section').classList.add('hidden');
+
+                try {
+                    const analysis = await getAiAnalysis(text);
+                    document.getElementById('ai-sentiment').textContent = `Настрій відгуку: ${analysis.sentiment || 'Не визначено'}`;
+                    document.getElementById('ai-summary').textContent = `Ключова думка: ${analysis.summary || '–'}`;
+                    const suggestionsEl = document.getElementById('ai-suggestions');
+                    suggestionsEl.innerHTML = '';
+                    (analysis.suggestions || []).forEach(suggestion => {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        suggestionsEl.appendChild(li);
+                    });
+                    document.getElementById('ai-results-section').classList.remove('hidden');
+                } catch (error) {
+                    console.error('AI Assist Error:', error);
+                    alert(`Помилка аналізу: ${error.message}`);
+                } finally {
+                    showLoading(false, 'ai');
                 }
             };
             
@@ -677,7 +681,6 @@
             achievementsBtn.addEventListener('click', () => {
                 renderAchievements();
                 achievementsModal.classList.remove('hidden');
-                achievementsModal.classList.remove('modal-leave');
                 achievementsModal.classList.add('modal-enter');
             });
             closeAchievementsModalBtn.addEventListener('click', () => closeModal(achievementsModal));
@@ -693,6 +696,7 @@
             });
 
             feedbackForm.addEventListener('submit', handleSubmit);
+            document.getElementById('ai-assist-btn').addEventListener('click', handleAiAssist);
             document.getElementById('photo-upload-btn').addEventListener('click', () => document.getElementById('photo-upload-input').click());
             document.getElementById('photo-upload-input').addEventListener('change', handleFileSelect);
             document.getElementById('product-input').addEventListener('input', handleProductAutocomplete);
@@ -715,4 +719,3 @@
     </script>
 </body>
 </html>
-
