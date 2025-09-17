@@ -214,8 +214,23 @@
                     </div>
                 </div>
                 
-                <div id="product-section" class="hidden mb-4 relative">
-                    <label for="product-input" class="block text-sm font-medium text-gray-700 mb-1">Продукт (необов'язково):</label>
+                <!-- 1. НОВИЙ БЛОК: ВИПАДАЮЧИЙ СПИСОК ДЛЯ ПРИЧИНИ СКАРГИ -->
+                <div id="complaint-reason-section" class="hidden mb-4">
+                    <label for="complaint-reason-select" class="block text-sm font-medium text-gray-700 mb-1">Причина скарги:</label>
+                    <select id="complaint-reason-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+                        <option>Якість продукту (смак, запах, вигляд)</option>
+                        <option>Сторонній предмет у продукті</option>
+                        <option>Термін придатності</option>
+                        <option>Обслуговування персоналу</option>
+                        <option>Чистота в магазині</option>
+                        <option>Неправильний цінник / вага</option>
+                        <option>Інше (описати в повідомленні)</option>
+                    </select>
+                </div>
+
+                <!-- 2. ОНОВЛЕНИЙ БЛОК: ПОЛЕ ПРОДУКТУ ДЛЯ "НЕМАЄ ПРОДУКЦІЇ" -->
+                <div id="product-input-section" class="hidden mb-4 relative">
+                    <label for="product-input" class="block text-sm font-medium text-gray-700 mb-1">Продукт:</label>
                     <input type="text" id="product-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Почніть вводити назву...">
                     <div id="product-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg mt-1 max-h-40 overflow-y-auto shadow-lg hidden"></div>
                 </div>
@@ -383,19 +398,21 @@
                 currentCategory = category;
                 modalTitle.textContent = category;
                 
-                const productSection = document.getElementById('product-section');
+                const productInputSection = document.getElementById('product-input-section');
+                const complaintReasonSection = document.getElementById('complaint-reason-section');
                 const photoUploadSection = document.getElementById('photo-upload-section');
 
-                if (category === 'Скарга' || category === 'Немає продукції') {
-                    productSection.classList.remove('hidden');
-                } else {
-                    productSection.classList.add('hidden');
-                }
+                productInputSection.classList.add('hidden');
+                complaintReasonSection.classList.add('hidden');
+                photoUploadSection.classList.add('hidden');
 
                 if (category === 'Скарга') {
+                    complaintReasonSection.classList.remove('hidden');
                     photoUploadSection.classList.remove('hidden');
-                } else {
-                    photoUploadSection.classList.add('hidden');
+                }
+
+                if (category === 'Немає продукції') {
+                    productInputSection.classList.remove('hidden');
                 }
 
                 modal.classList.remove('hidden');
@@ -417,11 +434,18 @@
 
             const resetForm = () => {
                 feedbackForm.reset();
+                document.getElementById('product-input-section').classList.add('hidden');
+                document.getElementById('complaint-reason-section').classList.add('hidden');
+                document.getElementById('photo-upload-section').classList.add('hidden');
                 document.getElementById('photo-preview-container').classList.add('hidden');
                 document.getElementById('ai-results-section').classList.add('hidden');
                 document.getElementById('product-suggestions').innerHTML = '';
                 document.getElementById('product-suggestions').classList.add('hidden');
                 document.getElementById('photo-preview').src = '';
+                const complaintReasonSelect = document.getElementById('complaint-reason-select');
+                if (complaintReasonSelect) {
+                    complaintReasonSelect.selectedIndex = 0;
+                }
                 selectedFile = null;
                 currentCategory = '';
                 satisfactionRating = 0;
@@ -533,7 +557,10 @@
                 formData.append('storeId', storeId);
                 formData.append('category', currentCategory);
                 formData.append('rating', satisfactionRating);
-                formData.append('product', document.getElementById('product-input').value || null);
+                const productValue = currentCategory === 'Немає продукції' ? document.getElementById('product-input').value : '';
+                const complaintReason = currentCategory === 'Скарга' ? document.getElementById('complaint-reason-select').value : '';
+                formData.append('product', productValue || '');
+                formData.append('complaintReason', complaintReason || '');
                 formData.append('text', document.getElementById('feedback-text').value);
                 formData.append('phone', document.getElementById('phone-input').value || null);
                 if (userGeolocation) {
