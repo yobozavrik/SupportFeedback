@@ -703,17 +703,20 @@
                 `;
                 achievementsList.innerHTML = achievementHTML;
             };
+
+            const openAchievementsModal = () => {
+                renderAchievements();
+                achievementsModal.classList.remove('hidden');
+                achievementsModal.classList.remove('modal-leave');
+                achievementsModal.classList.add('modal-enter');
+            };
             
             // --- EVENT LISTENERS BINDING ---
             categoryButtons.forEach(button => button.addEventListener('click', () => openModal(button.dataset.category)));
             closeModalBtn.addEventListener('click', () => closeModal(modal));
             modal.addEventListener('click', (e) => { if (e.target.id === 'feedback-modal') closeModal(modal); });
             
-            achievementsBtn.addEventListener('click', () => {
-                renderAchievements();
-                achievementsModal.classList.remove('hidden');
-                achievementsModal.classList.add('modal-enter');
-            });
+            achievementsBtn.addEventListener('click', openAchievementsModal);
             closeAchievementsModalBtn.addEventListener('click', () => closeModal(achievementsModal));
             achievementsModal.addEventListener('click', (e) => { if (e.target.id === 'achievements-modal') closeModal(achievementsModal); });
 
