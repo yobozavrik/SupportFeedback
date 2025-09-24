@@ -5,16 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Зворотний зв'язок | Галя Балувана</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
+    <script>
+        (function () {
+            try {
+                const storedTheme = localStorage.getItem('gala-theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (error) {
+                console.warn('Unable to apply stored theme preference.', error);
+            }
+        })();
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #fff7ed 0%, #fff1e1 100%);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        html.dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1f2937 100%);
         }
         .glassmorphism {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        html.dark .glassmorphism {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.65);
         }
         .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
         .modal-leave { animation: fadeOut 0.3s ease-in forwards; }
@@ -66,6 +93,15 @@
             background-color: #f97316;
             color: white;
         }
+        html.dark #product-suggestions {
+            background-color: rgba(15, 23, 42, 0.95);
+            border-color: rgba(71, 85, 105, 0.6);
+            color: #e2e8f0;
+        }
+        html.dark #product-suggestions div:hover {
+            background-color: #f97316;
+            color: #0f172a;
+        }
         .star-rating .star { color: #d1d5db; transition: color 0.2s; }
         .star-rating .star.selected, .star-rating:hover .star:hover ~ .star, .star-rating:hover .star:hover { color: #f59e0b; }
         .star-rating:hover .star { color: #f59e0b; }
@@ -76,18 +112,62 @@
         .category-btn:active {
             transform: translateY(-1px) scale(0.98);
         }
+        html.dark .achievement-progress-bar {
+            background-color: rgba(148, 163, 184, 0.2);
+        }
+        .toast-message {
+            width: 100%;
+            max-width: 20rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            color: #f8fafc;
+        }
+        .toast-success {
+            background-color: #22c55e;
+        }
+        .toast-achievement {
+            background-color: #facc15;
+            color: #1f2937;
+        }
+        html.dark .toast-message {
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.75);
+        }
+        html.dark .toast-success {
+            background-color: #15803d;
+        }
+        html.dark .toast-achievement {
+            color: #0f172a;
+        }
+        .theme-toggle {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-orange-50 text-gray-800">
+<body class="bg-orange-50 text-gray-800 dark:bg-slate-950 dark:text-gray-100 transition-colors duration-300">
 
     <div class="container mx-auto max-w-lg min-h-screen flex flex-col items-center gap-8 px-4 py-8">
-        
+
+        <div class="w-full flex justify-end">
+            <button id="theme-toggle" type="button" class="theme-toggle glassmorphism flex items-center gap-2 rounded-full border border-orange-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 px-3 py-1.5 text-sm font-medium text-orange-600 dark:text-orange-300 transition-colors duration-300" aria-pressed="false">
+                <span class="sr-only">Змінити тему</span>
+                <svg id="theme-toggle-sun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364-1.414-1.414M7.05 7.05L5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="theme-toggle-moon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+                </svg>
+                <span id="theme-toggle-label">Темна тема</span>
+            </button>
+        </div>
+
         <header class="text-center mb-8 content-enter" style="animation-delay: 100ms;">
-            <h1 class="text-4xl font-bold text-[#8B4513]">Галя Балувана</h1>
-            <p class="text-gray-600 mt-2">Ми цінуємо вашу думку! Залиште відгук.</p>
+            <h1 class="text-4xl font-bold text-[#8B4513] dark:text-orange-300">Галя Балувана</h1>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">Ми цінуємо вашу думку! Залиште відгук.</p>
         </header>
 
         <main class="w-full content-enter" style="animation-delay: 200ms;">
@@ -97,28 +177,28 @@
                     <div class="w-12 h-12 text-red-500 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
                     </div>
-                    <span class="font-semibold text-gray-700">Скарга</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Скарга</span>
                 </button>
 
                 <button data-category="Немає продукції" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
                      <div class="w-12 h-12 text-blue-500 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
                     </div>
-                    <span class="font-semibold text-gray-700">Немає продукції</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Немає продукції</span>
                 </button>
 
                 <button data-category="Пропозиція" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
                     <div class="w-12 h-12 text-yellow-500 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a7.5 7.5 0 01-7.5 0c-1.255 0-2.42.292-3.5.834m14.5-10.334a24.017 24.017 0 01-14.5 0" /></svg>
                     </div>
-                    <span class="font-semibold text-gray-700">Пропозиція</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Пропозиція</span>
                 </button>
 
                 <button data-category="Співпраця" class="category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
                     <div class="w-12 h-12 text-green-500 mb-2">
                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                     </div>
-                    <span class="font-semibold text-gray-700">Співпраця</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Співпраця</span>
                 </button>
 
                 <button data-category="Подякувати продавцю" class="col-span-2 category-btn glassmorphism p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center justify-center">
@@ -127,29 +207,29 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                         </svg>
                     </div>
-                    <span class="font-semibold text-gray-700">Подякувати продавцю</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Подякувати продавцю</span>
                 </button>
             </div>
         </main>
 
         <section id="faq-section" class="w-full mt-8 glassmorphism p-6 rounded-2xl shadow-lg content-enter" style="animation-delay: 300ms;">
-            <h2 class="text-xl font-bold text-center mb-4 text-gray-800">Часті запитання</h2>
+            <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">Часті запитання</h2>
             <div class="space-y-2">
                 <div class="faq-item">
-                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 transition">
+                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition">
                         <span>Як дізнатися склад продукту?</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div class="faq-answer hidden p-3 pt-0 text-gray-600">
+                    <div class="faq-answer hidden p-3 pt-0 text-gray-600 dark:text-gray-300">
                         <p>Повний склад кожного продукту вказаний на етикетці. Також ви можете запитати у наших продавців-консультантів у магазині.</p>
                     </div>
                 </div>
                  <div class="faq-item">
-                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 transition">
+                    <button class="faq-question w-full flex justify-between items-center text-left font-semibold p-3 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition">
                         <span>Де знайти найближчий магазин?</span>
                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div class="faq-answer hidden p-3 pt-0 text-gray-600">
+                    <div class="faq-answer hidden p-3 pt-0 text-gray-600 dark:text-gray-300">
                         <p>Карта всіх наших магазинів доступна в офіційному додатку. Ми постійно розширюємо нашу мережу, щоб бути ближчими до вас.</p>
                     </div>
                 </div>
@@ -158,7 +238,7 @@
 
         <footer class="w-full mt-auto pt-8 text-center content-enter" style="animation-delay: 400ms;">
             <div class="flex justify-center items-center space-x-6 mb-4">
-                <a href="https://www.instagram.com/galiabaluvana.chernivtsi" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                <a href="https://www.instagram.com/galiabaluvana.chernivtsi" target="_blank" rel="noopener noreferrer" class="text-gray-500 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors duration-300 flex flex-col items-center">
                     <svg class="w-7 h-7" viewBox="0 0 448 512" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <radialGradient id="instagram-gradient-footer" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
@@ -178,16 +258,16 @@
                     </svg>
                     <span class="mt-1 text-xs">Instagram</span>
                 </a>
-                 <button id="achievements-btn" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                <button id="achievements-btn" class="text-gray-500 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors duration-300 flex flex-col items-center">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                     <span class="mt-1 text-xs">Мої досягнення</span>
                 </button>
-                <a href="#" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-orange-600 transition-colors duration-300 flex flex-col items-center">
+                <a href="#" target="_blank" rel="noopener noreferrer" class="text-gray-500 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors duration-300 flex flex-col items-center">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     <span class="mt-1 text-xs">Наш додаток</span>
                 </a>
             </div>
-            <p class="mt-4 text-xs text-gray-400">© 2025 Галя Балувана. Всі права захищені.</p>
+            <p class="mt-4 text-xs text-gray-400 dark:text-gray-500">© 2025 Галя Балувана. Всі права захищені.</p>
         </footer>
     </div>
 
@@ -195,8 +275,8 @@
     <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
         <div class="glassmorphism rounded-2xl shadow-xl w-full max-w-md p-6 md:p-8 overflow-y-auto max-h-screen">
             <div class="flex justify-between items-center mb-4">
-                <h2 id="modal-title" class="text-2xl font-bold text-gray-800"></h2>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800 dark:text-gray-100"></h2>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -204,7 +284,7 @@
             </div>
             <form id="feedback-form">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Наскільки ви задоволені?</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Наскільки ви задоволені?</label>
                     <div id="satisfaction-rating" class="star-rating flex items-center justify-center text-4xl cursor-pointer" data-rating="0">
                         <span class="star" data-value="1">★</span>
                         <span class="star" data-value="2">★</span>
@@ -216,8 +296,8 @@
                 
                 <!-- 1. НОВИЙ БЛОК: ВИПАДАЮЧИЙ СПИСОК ДЛЯ ПРИЧИНИ СКАРГИ -->
                 <div id="complaint-reason-section" class="hidden mb-4">
-                    <label for="complaint-reason-select" class="block text-sm font-medium text-gray-700 mb-1">Причина скарги:</label>
-                    <select id="complaint-reason-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+                    <label for="complaint-reason-select" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Причина скарги:</label>
+                    <select id="complaint-reason-select" class="w-full p-3 border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
                         <option>Якість продукту (смак, запах, вигляд)</option>
                         <option>Термін придатності</option>
                         <option>Обслуговування персоналу</option>
@@ -229,36 +309,36 @@
 
                 <!-- 2. ОНОВЛЕНИЙ БЛОК: ПОЛЕ ПРОДУКТУ ДЛЯ "НЕМАЄ ПРОДУКЦІЇ" -->
                 <div id="product-input-section" class="hidden mb-4 relative">
-                    <label for="product-input" class="block text-sm font-medium text-gray-700 mb-1">Продукт:</label>
-                    <input type="text" id="product-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Почніть вводити назву...">
-                    <div id="product-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-b-lg mt-1 max-h-40 overflow-y-auto shadow-lg hidden"></div>
+                    <label for="product-input" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Продукт:</label>
+                    <input type="text" id="product-input" class="w-full p-3 border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Почніть вводити назву...">
+                    <div id="product-suggestions" class="absolute z-10 w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-b-lg mt-1 max-h-40 overflow-y-auto shadow-lg hidden"></div>
                 </div>
 
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
-                        <label for="feedback-text" class="block text-sm font-medium text-gray-700">Ваше повідомлення:</label>
+                        <label for="feedback-text" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Ваше повідомлення:</label>
                         <button type="button" id="ai-assist-btn" class="text-xs text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-1">
                             <span id="ai-assist-btn-text">✨ Допомога AI</span>
                             <div id="ai-assist-loader" class="ai-loader hidden"></div>
                         </button>
                     </div>
-                    <textarea id="feedback-text" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Опишіть детальніше..." required></textarea>
+                    <textarea id="feedback-text" rows="5" class="w-full p-3 border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Опишіть детальніше..." required></textarea>
                 </div>
 
-                <div id="ai-results-section" class="hidden mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Аналіз від AI:</p>
+                <div id="ai-results-section" class="hidden mb-4 p-3 bg-orange-50 dark:bg-slate-900/70 rounded-lg border border-orange-200 dark:border-orange-500/40">
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Аналіз від AI:</p>
                     <div id="ai-sentiment" class="text-sm mb-2"></div>
                     <div id="ai-summary" class="text-sm mb-2"></div>
                     <div>
-                        <p class="text-xs font-medium text-gray-600 mb-1">Що можна додати:</p>
-                        <ul id="ai-suggestions" class="list-disc list-inside text-xs text-gray-500 space-y-1"></ul>
+                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Що можна додати:</p>
+                        <ul id="ai-suggestions" class="list-disc list-inside text-xs text-gray-500 dark:text-gray-300 space-y-1"></ul>
                     </div>
                 </div>
                 
                 <div id="photo-upload-section" class="hidden mb-4">
-                     <label for="photo-upload-btn" class="block text-sm font-medium text-gray-700 mb-1">Прикріпити фото:</label>
+                     <label for="photo-upload-btn" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Прикріпити фото:</label>
                     <input type="file" id="photo-upload-input" class="hidden" accept="image/*">
-                     <button type="button" id="photo-upload-btn" class="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 hover:border-orange-500 hover:text-orange-600 transition">
+                     <button type="button" id="photo-upload-btn" class="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -271,16 +351,16 @@
                 </div>
                 
                 <div class="mb-6">
-                    <label for="phone-input" class="block text-sm font-medium text-gray-700 mb-1">Ваш телефон (необов'язково):</label>
-                    <input type="tel" id="phone-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Для зворотного зв'язку">
+                    <label for="phone-input" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ваш телефон (необов'язково):</label>
+                    <input type="tel" id="phone-input" class="w-full p-3 border border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="Для зворотного зв'язку">
                 </div>
 
                 <div class="mb-6 flex items-start">
                     <div class="flex items-center h-5">
-                        <input id="consent-checkbox" name="consent" type="checkbox" class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 rounded" required>
+                        <input id="consent-checkbox" name="consent" type="checkbox" class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 dark:border-slate-600 rounded" required>
                     </div>
                     <div class="ml-3 text-sm">
-                        <label for="consent-checkbox" class="font-medium text-gray-700">Я даю згоду на обробку моїх персональних даних.</label>
+                        <label for="consent-checkbox" class="font-medium text-gray-700 dark:text-gray-200">Я даю згоду на обробку моїх персональних даних.</label>
                     </div>
                 </div>
 
@@ -296,8 +376,8 @@
     <div id="achievements-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
         <div class="glassmorphism rounded-2xl shadow-xl w-full max-w-md p-6 md:p-8">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Мої досягнення</h2>
-                <button id="close-achievements-modal-btn" class="text-gray-400 hover:text-gray-600">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Мої досягнення</h2>
+                <button id="close-achievements-modal-btn" class="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -341,6 +421,13 @@
             const achievementsModal = document.getElementById('achievements-modal');
             const closeAchievementsModalBtn = document.getElementById('close-achievements-modal-btn');
             const achievementsList = document.getElementById('achievements-list');
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleSun = document.getElementById('theme-toggle-sun');
+            const themeToggleMoon = document.getElementById('theme-toggle-moon');
+            const themeToggleLabel = document.getElementById('theme-toggle-label');
+            const prefersDarkMedia = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+            const THEME_STORAGE_KEY = 'gala-theme';
             
             // --- STATE ---
             let currentCategory = '';
@@ -350,6 +437,76 @@
             let userGeolocation = null;
             let userId = null;
             let userAchievements = null;
+
+            const getStoredTheme = () => {
+                try {
+                    return localStorage.getItem(THEME_STORAGE_KEY);
+                } catch (error) {
+                    console.warn('Unable to read stored theme preference.', error);
+                    return null;
+                }
+            };
+
+            const storeTheme = (theme) => {
+                try {
+                    localStorage.setItem(THEME_STORAGE_KEY, theme);
+                } catch (error) {
+                    console.warn('Unable to persist theme preference.', error);
+                }
+            };
+
+            const applyTheme = (theme, options = {}) => {
+                const { persist = true } = options;
+                const themeToApply = theme === 'dark' ? 'dark' : 'light';
+                const root = document.documentElement;
+                const isDark = themeToApply === 'dark';
+                root.classList.toggle('dark', isDark);
+
+                if (themeToggleBtn) {
+                    themeToggleBtn.setAttribute('aria-pressed', String(isDark));
+                }
+                if (themeToggleSun && themeToggleMoon) {
+                    themeToggleSun.classList.toggle('hidden', !isDark);
+                    themeToggleMoon.classList.toggle('hidden', isDark);
+                }
+                if (themeToggleLabel) {
+                    themeToggleLabel.textContent = isDark ? 'Світла тема' : 'Темна тема';
+                }
+
+                if (persist) {
+                    storeTheme(themeToApply);
+                }
+            };
+
+            const initializeTheme = () => {
+                const storedTheme = getStoredTheme();
+                if (storedTheme === 'dark' || storedTheme === 'light') {
+                    applyTheme(storedTheme, { persist: false });
+                } else {
+                    const prefersDark = prefersDarkMedia ? prefersDarkMedia.matches : false;
+                    applyTheme(prefersDark ? 'dark' : 'light', { persist: false });
+                }
+
+                if (themeToggleBtn) {
+                    themeToggleBtn.addEventListener('click', () => {
+                        const nextTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+                        applyTheme(nextTheme);
+                    });
+                }
+
+                if (prefersDarkMedia) {
+                    const syncWithSystem = (event) => {
+                        if (!getStoredTheme()) {
+                            applyTheme(event.matches ? 'dark' : 'light', { persist: false });
+                        }
+                    };
+                    if (typeof prefersDarkMedia.addEventListener === 'function') {
+                        prefersDarkMedia.addEventListener('change', syncWithSystem);
+                    } else if (typeof prefersDarkMedia.addListener === 'function') {
+                        prefersDarkMedia.addListener(syncWithSystem);
+                    }
+                }
+            };
 
             // --- INITIALIZATION ---
             const initializeUser = () => {
@@ -373,6 +530,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             storeId = urlParams.get('store_id') || 'unknown_store';
             initializeUser();
+            initializeTheme();
 
 
             // --- FUNCTIONS ---
@@ -487,14 +645,11 @@
             
             const showToast = (message, type = 'success') => {
                 const toastId = `toast-${Date.now()}`;
-                const colors = {
-                    success: 'bg-green-500',
-                    achievement: 'bg-yellow-500'
-                };
                 const icon = type === 'achievement' ? '🏆' : '✅';
                 const toastElement = document.createElement('div');
                 toastElement.id = toastId;
-                toastElement.className = `w-full max-w-sm p-4 text-white rounded-lg shadow-xl ${colors[type]} toast-enter`;
+                const toneClass = type === 'achievement' ? 'toast-achievement' : 'toast-success';
+                toastElement.className = `toast-message ${toneClass} toast-enter`;
                 toastElement.innerHTML = `<p>${icon} ${message}</p>`;
                 
                 toastContainer.appendChild(toastElement);
@@ -636,7 +791,7 @@
                     filteredProducts.forEach(product => {
                         const div = document.createElement('div');
                         div.textContent = product;
-                        div.className = 'p-2 cursor-pointer transition-colors duration-200';
+                        div.className = 'p-2 cursor-pointer transition-colors duration-200 text-gray-700 dark:text-gray-200';
                         div.onclick = () => {
                             document.getElementById('product-input').value = product;
                             suggestionsEl.innerHTML = '';
@@ -682,16 +837,18 @@
                 const isCompleted = earned || progress >= SECRET_SHOPPER_GOAL;
 
                 const achievementHTML = `
-                    <div class="border rounded-lg p-4 ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-gray-50'}">
+                    <div class="border rounded-lg p-4 ${isCompleted
+                        ? 'bg-green-50 border-green-200 dark:bg-emerald-900/40 dark:border-emerald-500/40'
+                        : 'bg-gray-50 border-gray-200 dark:bg-slate-900/60 dark:border-slate-700/60'}">
                         <div class="flex items-center">
                             <div class="text-4xl mr-4">${isCompleted ? '🏆' : '🕵️'}</div>
                             <div>
-                                <h3 class="font-bold text-lg ${isCompleted ? 'text-green-700' : 'text-gray-800'}">Таємний покупець</h3>
-                                <p class="text-sm text-gray-600">Залиште відгуки з ${SECRET_SHOPPER_GOAL} різних магазинів.</p>
+                                <h3 class="font-bold text-lg ${isCompleted ? 'text-green-700 dark:text-emerald-300' : 'text-gray-800 dark:text-gray-100'}">Таємний покупець</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Залиште відгуки з ${SECRET_SHOPPER_GOAL} різних магазинів.</p>
                             </div>
                         </div>
                         <div class="mt-3">
-                            <div class="flex justify-between text-sm font-medium ${isCompleted ? 'text-green-700' : 'text-gray-700'} mb-1">
+                            <div class="flex justify-between text-sm font-medium ${isCompleted ? 'text-green-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-200'} mb-1">
                                 <span>Прогрес</span>
                                 <span>${progress} / ${SECRET_SHOPPER_GOAL}</span>
                             </div>
