@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let userAchievements = null;
     let lastFocusedElement = null;
     // Anti-spam state
-    const MIN_TEXT_LEN = 15;
+    const MIN_TEXT_LEN = 0;
     const MAX_TEXT_LEN = 800;
     const SUBMIT_COOLDOWN_MS = 15000; // 15s
     const PER_USER_RATE_LIMIT = { windowMs: 60_000, max: 5 }; // 5 отправок в минуту
@@ -290,12 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const isImage = file.type && file.type.startsWith('image/');
             const maxSizeBytes = 5 * 1024 * 1024; // 5MB
             if (!isImage) {
-                alert('Пожалуйста, выберите файл изображения.');
+                alert('Будь-ласка оберіть файл зображення');
                 event.target.value = '';
                 return;
             }
             if (file.size > maxSizeBytes) {
-                alert('Файл слишком большой. Максимум 5 МБ.');
+                alert('Файл великий. Максимум 5 МБ.');
                 event.target.value = '';
                 return;
             }
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isWEBP = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
             const isHEIC = bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
             if (!(isJPEG || isPNG || isWEBP || isHEIC)) {
-                alert('Неподдерживаемый формат. Разрешены JPEG/PNG/WEBP/HEIC.');
+                alert('Формат не підтримується. Дозволені JPEG/PNG/WEBP/HEIC.');
                 event.target.value = '';
                 return;
             }
