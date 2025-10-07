@@ -12,6 +12,46 @@
   html.dark body {
     background: linear-gradient(135deg, #0f172a 0%, #1f2937 100%);
   }
+
+  input,
+  select,
+  textarea {
+    color: inherit;
+  }
+
+  html:not(.dark) input,
+  html:not(.dark) select,
+  html:not(.dark) textarea {
+    color-scheme: light;
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #1f2937;
+  }
+
+  html:not(.dark) input::placeholder,
+  html:not(.dark) textarea::placeholder {
+    color: rgba(100, 116, 139, 0.85);
+  }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html:not(.dark) input,
+    html:not(.dark) select,
+    html:not(.dark) textarea {
+      background-color: #1f2937;
+      color: #f8fafc;
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    html:not(.dark) input::placeholder,
+    html:not(.dark) textarea::placeholder {
+      color: rgba(226, 232, 240, 0.75);
+    }
+  }
 }
 
 @layer components {
